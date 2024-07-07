@@ -8,9 +8,10 @@ RUN pip install poetry
 
 # Copy project files
 COPY pyproject.toml poetry.lock ./
-RUN poetry config virtualenvs.create false && poetry install --only main
+COPY app ./app
 
-COPY . .
+# Install dependencies
+RUN poetry config virtualenvs.create false && poetry install --only main
 
 # Stage 2: Runtime
 FROM python:3.10-slim AS runtime

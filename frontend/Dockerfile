@@ -5,7 +5,7 @@ WORKDIR /app
 # Copy package.json and install dependencies
 COPY package.json ./
 RUN npm install
-
+RUN npm audit fix  # This will fix vulnerabilities
 # Copy the entire project
 COPY . .
 
