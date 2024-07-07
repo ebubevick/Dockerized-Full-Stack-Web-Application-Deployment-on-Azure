@@ -4,7 +4,7 @@ WORKDIR /app
 COPY package.json ./
 RUN npm install
 COPY . .
-RUN npm run build
+RUN npm run build -- --max-old-space-size=1024
 
 # Stage 2: Serve the React app using Nginx
 FROM nginx:alpine
