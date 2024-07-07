@@ -1,10 +1,10 @@
 # Stage 1: Build the backend service
-FROM python:3.8-slim AS build-backend
+FROM python:3.10-slim AS build-backend
 
 WORKDIR /app
 
-# Install Poetry
-RUN pip install poetry
+# Install Poetry and update pip
+RUN pip install --upgrade pip && pip install poetry
 
 # Copy project files
 COPY pyproject.toml poetry.lock ./
@@ -13,7 +13,7 @@ RUN poetry config virtualenvs.create false && poetry install --no-dev
 COPY . .
 
 # Stage 2: Runtime
-FROM python:3.8-slim AS runtime
+FROM python:3.10-slim AS runtime
 
 WORKDIR /app
 
