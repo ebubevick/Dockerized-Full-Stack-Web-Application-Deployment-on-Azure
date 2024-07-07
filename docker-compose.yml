@@ -1,15 +1,20 @@
+# Docker Compose configuration for your services
+
 version: '3.7'
 
 services:
+  # Frontend service
   frontend:
     build:
       context: ./frontend
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.frontend.rule=Host(`ebubevick.engineer`)"
-      - "traefik.http.routers.frontend.entrypoints=web"
+      - "traefik.http.routers.frontend.entrypoints=web,websecure"
+      - "traefik.http.routers.frontend.middlewares=redirect-to-https@docker,redirect-to-non-www@docker"
       - "traefik.http.services.frontend.loadbalancer.server.port=80"
 
+  # Backend service
   backend:
     build:
       context: ./backend
@@ -17,9 +22,11 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.backend.rule=Host(`api.ebubevick.engineer`) && PathPrefix(`/api`, `/docs`)"
-      - "traefik.http.routers.backend.entrypoints=web"
+      - "traefik.http.routers.backend.entrypoints=web,websecure"
+      - "traefik.http.routers.backend.middlewares=redirect-to-https@docker,redirect-to-non-www@docker"
       - "traefik.http.services.backend.loadbalancer.server.port=8000"
 
+  # PostgreSQL database service
   db:
     image: postgres:13
     environment:
@@ -29,19 +36,22 @@ services:
     volumes:
       - db_data:/var/lib/postgresql/data
 
+  # Adminer (database management tool) service
   adminer:
     image: adminer
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.adminer.rule=Host(`db.ebubevick.engineer`)"
-      - "traefik.http.routers.adminer.entrypoints=web"
+      - "traefik.http.routers.adminer.entrypoints=web,websecure"
+      - "traefik.http.routers.adminer.middlewares=redirect-to-https@docker,redirect-to-non-www@docker"
     environment:
       ADMINER_DEFAULT_SERVER: db
 
+  # Traefik (reverse proxy) service
   traefik:
     image: traefik:v2.4
     command:
-      - "--api.insecure=true"
+      - "--api.insecure=false"
       - "--providers.docker=true"
       - "--entrypoints.web.address=:80"
       - "--entrypoints.websecure.address=:443"
@@ -58,10 +68,8 @@ services:
     labels:
       - "traefik.http.routers.traefik.rule=Host(`proxy.ebubevick.engineer`)"
       - "traefik.http.routers.traefik.service=api@internal"
-      - "traefik.http.routers.traefik.entrypoints=web"
-      - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
-      - "traefik.http.middlewares.redirect-to-non-www.redirectregex.regex=^https?://www\\.(.*)"
-      - "traefik.http.middlewares.redirect-to-non-www.redirectregex.replacement=https://$$1"
+      - "traefik.http.routers.traefik.entrypoints=web,websecure"
+      - "traefik.http.routers.traefik.middlewares=redirect-to-https@docker,redirect-to-non-www@docker"
 
 volumes:
   db_data:
